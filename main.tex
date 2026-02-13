@@ -1,0 +1,116 @@
+\documentclass[11pt]{article}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{tikz}
+\usepackage{booktabs} 
+\usepackage{titling} % Package to adjust title spacing
+\usepackage[top=1in, bottom=1in, left=1in, right=1in]{geometry} % Standardize margins
+
+\usetikzlibrary{graphs, quotes, arrows.meta, positioning}
+
+% This moves the title up
+\setlength{\droptitle}{-5em} 
+
+\title{Incidence Matrices, Graph Rank and Application to Electrical Networks}
+\author{Raghvendra Shukla\\ Based on MIT OCW 18.06 Lectures by Gilbert Strang}
+\date{February 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction to the Incidence Matrix}
+
+At first glance, a graph is just points (nodes) connected by lines (edges). But when we look at it through linear algebra, it becomes a really nice way to model potentials and flows — exactly what we need for things like electrical networks.
+
+We use an $m \times n$ incidence matrix $A$ for a graph with $n$ nodes and $m$ edges. Each row is one edge: we put $-1$ at the starting node and $+1$ at the ending node (the orientation is arbitrary — we just need to stay consistent for each edge).
+
+\begin{center}
+\begin{tikzpicture}[
+    main/.style = {draw, circle, minimum size=0.8cm, font=\sffamily\large},
+    >={Stealth[length=3mm]},
+    node distance=2.5cm and 4cm, thick
+]
+\node[main] (1) at (0,0) {1};
+\node[main] (2) [below=of 1] {2};
+\node[main] (4) [right=of 1] {4};
+\node[main] (3) [below=of 4] {3};
+\draw[->] (1) -- node[midway, left] {1} (2);
+\draw[->] (2) -- node[midway, below] {2} (3);
+\draw[->] (1) -- node[midway, above, sloped] {3} (3);
+\draw[->] (1) -- node[midway, above] {4} (4);
+\draw[->] (3) -- node[midway, right] {5} (4);
+\end{tikzpicture}
+\end{center}
+
+For this small graph, the incidence matrix $A$ (with edges ordered 1$\to$2, 2$\to$3, 1$\to$3, 1$\to$4, 3$\to$4) is:
+
+\[
+A = \begin{pmatrix}
+-1 & 1 & 0 & 0 \\
+ 0 & -1 & 1 & 0 \\
+-1 & 0 & 1 & 0 \\
+-1 & 0 & 0 & 1 \\
+ 0 & 0 & -1 & 1
+\end{pmatrix}
+\]
+
+\section{Physical Interpretation: The Three Laws}
+
+To solve any network problem, we connect node potentials to edge currents using $A$ and $A^T$ — they really show their physical meaning here.
+
+\subsection{Potential Differences ($e = Ax$)}
+
+Let $x$ be the vector of potentials (voltages) at each node. Then $Ax$ gives us the voltage drop across every edge. For example, the first row tells us $x_2 - x_1$ — that's the drop from node 1 to node 2. This difference is what drives current through the edge.
+
+\subsection{Ohm's Law ($y = Ce$)}
+
+Ohm's law tells us the current $y$ that flows because of that voltage drop $e$. We write $y = C e$, where $C$ is a diagonal matrix containing the conductances ($1/R$) of each edge. High conductance = wide pipe = lots of current even for small voltage difference.
+
+\subsection{Kirchhoff's Current Law ($A^T y = f$)}
+
+KCL is about current balance at each node. The currents coming in must equal the currents going out (except for any external source $f$).
+
+When we do $A^T y$, the $i$-th entry sums up all the currents entering and leaving node $i$:
+\begin{itemize}
+    \item A $+1$ in $A$ becomes $+1$ in $A^T$ → current arriving at the node
+    \item A $-1$ in $A$ becomes $-1$ in $A^T$ → current leaving the node
+\end{itemize}
+
+So $A^T y = 0$ is basically what Kirchhoff's Current Law looks like in matrix form.
+
+\section{The Graph Laplacian ($A^T C A$)}
+
+If we substitute $y = C (A x)$ into $A^T y = f$, we get the key equation:
+
+\[
+A^T C A \, x = f
+\]
+
+The matrix $L = A^T C A$ is called the \textbf{Graph Laplacian}. It is symmetric, the diagonal entry $L_{ii}$ is the sum of conductances connected to node $i$, and the off-diagonal $L_{ij}$ is the negative of the conductance between $i$ and $j$ (if they are connected). This matrix appears everywhere — electrical networks, heat flow, graph machine learning, and more.
+
+\section{Euler's Formula and the Left Nullspace}
+
+For a connected planar graph, Euler’s formula relates nodes ($n$), edges ($m$), and faces ($f$): $n - m + f = 2$. In Strang’s framework, this is a statement about the dimension of the Left Nullspace. Since the rank is $r = n - 1$, the number of independent loops is $\dim(N(A^T)) = m - (n - 1)$. Rearranging Euler's formula gives $f - 1 = m - n + 1$, proving that the number of "mesh" loops (faces minus the outer one) is exactly the number of independent cycles in the graph.
+
+\section{Summary: The Four Fundamental Subspaces}
+
+The physics of the network matches up nicely with the four fundamental subspaces of $A$. For our graph ($n=4$ nodes, $m=5$ edges), the rank is $n-1 = 3$.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Subspace} & \textbf{Dimension} & \textbf{Physical Meaning} \\ \midrule
+Nullspace $N(A)$          & $n-r = 1$ & Constant potentials (no voltage differences, no flow) \\
+Row Space $C(A^T)$        & $r = 3$   & Possible potential differences / voltage drops \\
+Column Space $C(A)$       & $r = 3$   & Net voltage drops that satisfy KVL (loop sums = 0) \\
+Left Nullspace $N(A^T)$   & $m-r = 2$ & Independent cycles / mesh loop currents \\ \bottomrule
+\end{tabular}
+\end{table}
+
+\section{Conclusion}
+
+Once we see that KCL lives in the left nullspace of $A$ and that Ohm's law connects the row space to the column space, solving a network becomes pretty straightforward: just ground one node (set its potential to zero), remove that row and column from the Laplacian if needed, and solve the resulting system. Linear algebra really is the natural language for talking about equilibrium in networks.
+
+\end{document}

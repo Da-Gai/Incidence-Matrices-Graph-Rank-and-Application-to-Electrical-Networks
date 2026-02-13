@@ -1,0 +1,24 @@
+## Core LaTeX auxiliary files
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.out
+*.synctex.gz
+*.toc
+*.lof
+*.lot
+
+## Bibliography files
+*.bbl
+*.blg
+*.bcf
+*.run.xml
+
+## PDF output (Optional: Ignore if you want users to compile it themselves)
+*.pdf
+
+## Editor-specific files (VS Code, TeXstudio, etc.)
+.vscode/
+*.bak
+*.sav
